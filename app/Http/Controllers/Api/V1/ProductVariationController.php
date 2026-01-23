@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\V1\BaseController;
-use App\Models\Product;
-use App\Models\ProductVariation;
+use Modules\Products\Models\Product;
+use Modules\Products\Models\ProductVariation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\V1\BaseController;
-use App\Models\Product;
-use App\Models\ProductImage;
+use Modules\Products\Models\Product;
+use Modules\Products\Models\ProductImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -49,34 +49,69 @@ class ProductImageController extends BaseController
 
         // Only vendor can add images to their products
         if ($user->isVendor() && $product->vendor_id !== $user->id) {
-            return $this->errorResponse('Unauthorized', 403);
+            return $this->errorResponse('Unauthorized. You can only upload images for your own products.', 403);
         }
 
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
-            'is_primary' => 'boolean',
-        ]);
+        try {
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
+                'is_primary' => 'boolean',
+            ]);
 
-        // If this is set as primary, unset others
-        if ($request->is_primary) {
-            ProductImage::where('product_id', $product->id)
-                ->update(['is_primary' => false]);
+            // Check if product exists and belongs to vendor
+            if (!$product || ($user->isVendor() && $product->vendor_id !== $user->id)) {
+                return $this->errorResponse('Product not found or access denied', 404);
+            }
+
+            // Limit images per product
+            $imageCount = ProductImage::where('product_id', $product->id)->count();
+            if ($imageCount >= 10) {
+                return $this->errorResponse('Maximum 10 images allowed per product', 422);
+            }
+
+            // If this is set as primary, unset others
+            if ($request->boolean('is_primary', false)) {
+                ProductImage::where('product_id', $product->id)
+                    ->update(['is_primary' => false]);
+            } else {
+                // If no images exist yet, make this primary
+                if ($imageCount === 0) {
+                    $request->merge(['is_primary' => true]);
+                }
+            }
+
+            $file = $request->file('image');
+            
+            // Verify file is actually an image
+            if (!getimagesize($file)) {
+                return $this->errorResponse('Uploaded file is not a valid image', 422);
+            }
+
+            $path = $file->store('products', 'public');
+
+            if (!$path) {
+                return $this->errorResponse('Failed to store image', 500);
+            }
+
+            $maxSort = ProductImage::where('product_id', $product->id)->max('sort_order') ?? -1;
+
+            $image = ProductImage::create([
+                'product_id' => $product->id,
+                'image_path' => $path,
+                'is_primary' => $request->boolean('is_primary', false),
+                'sort_order' => $maxSort + 1,
+            ]);
+
+            return $this->successResponse([
+                'id' => $image->id,
+                'product_id' => $product->id,
+                'image_path' => asset('storage/' . $path),
+                'is_primary' => $image->is_primary,
+                'sort_order' => $image->sort_order,
+            ], 'Image uploaded successfully', 201);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Image upload failed: ' . $e->getMessage(), 500);
         }
-
-        $path = $request->file('image')->store('products', 'public');
-
-        $image = ProductImage::create([
-            'product_id' => $product->id,
-            'image_path' => $path,
-            'is_primary' => $request->is_primary ?? false,
-            'sort_order' => ProductImage::where('product_id', $product->id)->max('sort_order') + 1,
-        ]);
-
-        return $this->successResponse([
-            'id' => $image->id,
-            'image_url' => asset('storage/' . $path),
-            'is_primary' => $image->is_primary,
-        ], 'Image uploaded successfully', 201);
     }
 
     /**
@@ -102,21 +137,29 @@ class ProductImageController extends BaseController
         $user = auth()->user();
 
         if ($user->isVendor() && $product->vendor_id !== $user->id) {
-            return $this->errorResponse('Unauthorized', 403);
+            return $this->errorResponse('Unauthorized. You can only update images for your own products.', 403);
         }
 
         if ($image->product_id !== $product->id) {
-            return $this->errorResponse('Image not found', 404);
+            return $this->errorResponse('Image does not belong to this product', 404);
         }
 
-        // Unset all primary images
-        ProductImage::where('product_id', $product->id)
-            ->update(['is_primary' => false]);
+        try {
+            // Unset all primary images for this product
+            ProductImage::where('product_id', $product->id)
+                ->where('id', '!=', $image->id)
+                ->update(['is_primary' => false]);
 
-        // Set this as primary
-        $image->update(['is_primary' => true]);
+            // Set this as primary
+            $image->update(['is_primary' => true]);
 
-        return $this->successResponse(null, 'Primary image set successfully');
+            return $this->successResponse(
+                ['id' => $image->id, 'is_primary' => true],
+                'Primary image set successfully'
+            );
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to set primary image: ' . $e->getMessage(), 500);
+        }
     }
 
     /**
@@ -142,20 +185,39 @@ class ProductImageController extends BaseController
         $user = auth()->user();
 
         if ($user->isVendor() && $product->vendor_id !== $user->id) {
-            return $this->errorResponse('Unauthorized', 403);
+            return $this->errorResponse('Unauthorized. You can only delete images from your own products.', 403);
         }
 
         if ($image->product_id !== $product->id) {
-            return $this->errorResponse('Image not found', 404);
+            return $this->errorResponse('Image does not belong to this product', 404);
         }
 
-        // Delete file from storage
-        if (Storage::disk('public')->exists($image->image_path)) {
-            Storage::disk('public')->delete($image->image_path);
+        try {
+            // Check if image is primary
+            $wasPrimary = $image->is_primary;
+
+            // Delete file from storage
+            if (Storage::disk('public')->exists($image->image_path)) {
+                Storage::disk('public')->delete($image->image_path);
+            }
+
+            // Delete database record
+            $image->delete();
+
+            // If deleted image was primary, set another as primary
+            if ($wasPrimary) {
+                $nextImage = ProductImage::where('product_id', $product->id)
+                    ->orderBy('sort_order')
+                    ->first();
+
+                if ($nextImage) {
+                    $nextImage->update(['is_primary' => true]);
+                }
+            }
+
+            return $this->successResponse(null, 'Image deleted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to delete image: ' . $e->getMessage(), 500);
         }
-
-        $image->delete();
-
-        return $this->successResponse(null, 'Image deleted successfully');
     }
 }

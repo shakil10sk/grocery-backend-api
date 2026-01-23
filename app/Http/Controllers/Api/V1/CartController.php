@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\V1\BaseController;
 use App\Http\Resources\CartResource;
-use App\Models\Cart;
-use App\Models\Product;
+use Modules\Products\Models\Cart;
+use Modules\Products\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;

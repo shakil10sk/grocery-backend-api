@@ -33,6 +33,14 @@ Route::prefix('v1')->group(function () {
     Route::get('/settings/contact', [App\Http\Controllers\Api\V1\SettingsController::class, 'getContact']);
     Route::get('/settings/footer', [App\Http\Controllers\Api\V1\SettingsController::class, 'getFooter']);
     Route::get('/settings/header', [App\Http\Controllers\Api\V1\SettingsController::class, 'getHeader']);
+    
+    // Public slider routes
+    Route::get('/sliders', [App\Http\Controllers\Api\V1\SliderController::class, 'index']);
+    Route::get('/sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'show']);
+    
+    // Public products and categories routes
+    Route::get('/products', [App\Http\Controllers\Api\V1\ProductController::class, 'index']);
+    Route::get('/products/{product}', [App\Http\Controllers\Api\V1\ProductController::class, 'show']);
 });
 
 // Protected routes
@@ -65,6 +73,9 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
     Route::post('products/{product}/stock', [App\Http\Controllers\Api\V1\ProductController::class, 'updateStock']);
     
     // Product reviews
+    // Admin/vendor: list all reviews
+    Route::get('reviews', [App\Http\Controllers\Api\V1\ReviewController::class, 'indexAll'])->middleware('role:admin,vendor');
+
     Route::get('products/{product}/reviews', [App\Http\Controllers\Api\V1\ReviewController::class, 'index']);
     Route::post('products/{product}/reviews', [App\Http\Controllers\Api\V1\ReviewController::class, 'store']);
     Route::get('reviews/{review}', [App\Http\Controllers\Api\V1\ReviewController::class, 'show']);
@@ -101,6 +112,14 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
     Route::put('settings/footer', [App\Http\Controllers\Api\V1\SettingsController::class, 'updateFooter'])->middleware('role:admin');
     Route::put('settings/header', [App\Http\Controllers\Api\V1\SettingsController::class, 'updateHeader'])->middleware('role:admin');
     
+    // Slider routes (admin only)
+    Route::get('sliders/all', [App\Http\Controllers\Api\V1\SliderController::class, 'indexAll'])->middleware('role:admin');
+    Route::post('sliders', [App\Http\Controllers\Api\V1\SliderController::class, 'store'])->middleware('role:admin');
+    Route::put('sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'update'])->middleware('role:admin');
+    Route::delete('sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'destroy'])->middleware('role:admin');
+    Route::post('sliders/{slider}/toggle', [App\Http\Controllers\Api\V1\SliderController::class, 'toggle'])->middleware('role:admin');
+    Route::post('sliders/reorder', [App\Http\Controllers\Api\V1\SliderController::class, 'reorder'])->middleware('role:admin');
+    
     // Cart routes
     Route::get('cart', [App\Http\Controllers\Api\V1\CartController::class, 'index']);
     Route::post('cart', [App\Http\Controllers\Api\V1\CartController::class, 'store']);
@@ -113,5 +132,12 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
     Route::apiResource('orders', App\Http\Controllers\Api\V1\OrderController::class);
     Route::post('orders/{order}/status', [App\Http\Controllers\Api\V1\OrderController::class, 'updateStatus']);
     Route::post('orders/{order}/cancel', [App\Http\Controllers\Api\V1\OrderController::class, 'cancel']);
+    
+    // Vendor Reports routes (vendor & admin only)
+    Route::prefix('reports')->middleware('role:vendor,admin')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\V1\VendorReportController::class, 'index']);
+        Route::get('/show/{date}', [App\Http\Controllers\Api\V1\VendorReportController::class, 'show']);
+        Route::post('/generate', [App\Http\Controllers\Api\V1\VendorReportController::class, 'generate']);
+    });
 });
 

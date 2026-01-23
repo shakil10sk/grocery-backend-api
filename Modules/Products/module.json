@@ -1,0 +1,11 @@
+{
+    "name": "Products",
+    "alias": "products",
+    "description": "Products Module - Handles product management, categories, cart, orders, and reviews",
+    "keywords": ["products", "categories", "cart", "orders", "reviews"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Products\\Providers\\ProductsServiceProvider"
+    ],
+    "files": []
+}

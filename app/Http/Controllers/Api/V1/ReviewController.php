@@ -6,8 +6,8 @@ use App\Http\Controllers\Api\V1\BaseController;
 use App\Http\Requests\StoreReviewRequest;
 use App\Http\Requests\UpdateReviewRequest;
 use App\Http\Resources\ReviewResource;
-use App\Models\Product;
-use App\Models\Review;
+use Modules\Products\Models\Product;
+use Modules\Products\Models\Review;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -32,6 +32,40 @@ class ReviewController extends BaseController
     public function index(Product $product): JsonResponse
     {
         $reviews = $product->reviews()->approved()->latest()->paginate(10);
+
+        return $this->paginatedResponse(
+            $reviews->through(fn($review) => new ReviewResource($review)),
+            'Reviews retrieved successfully'
+        );
+    }
+
+    /**
+     * List all reviews (admin/vendor view)
+     */
+    public function indexAll(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        $query = Review::with(['user', 'product'])->latest();
+
+        // Vendor should only see reviews for their products
+        if ($user && $user->isVendor()) {
+            $query->whereHas('product', function ($q) use ($user) {
+                $q->where('vendor_id', $user->id);
+            });
+        }
+
+        // Filter by approval status
+        if ($request->has('filter') && $request->filter !== 'all') {
+            if ($request->filter === 'pending') {
+                $query->where('is_approved', false);
+            } elseif ($request->filter === 'approved') {
+                $query->where('is_approved', true);
+            }
+        }
+
+        $perPage = (int) $request->get('per_page', 15);
+        $reviews = $query->paginate($perPage);
 
         return $this->paginatedResponse(
             $reviews->through(fn($review) => new ReviewResource($review)),
