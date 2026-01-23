@@ -26,9 +26,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized
+      // Handle unauthorized - only redirect if not already on login page
+      // This allows public pages to load without redirecting
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+        // Only redirect if accessing protected resources
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
