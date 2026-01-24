@@ -12,9 +12,9 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (requiredRole && !hasRole(requiredRole)) {
     return <Navigate to="/dashboard" replace />;

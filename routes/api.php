@@ -19,6 +19,10 @@ Route::get('/health', [App\Http\Controllers\Api\V1\HealthController::class, 'che
 
 // Public API routes (no auth required)
 Route::prefix('v1')->group(function () {
+    // Authentication routes
+    Route::post('/login', [App\Http\Controllers\Api\V1\AuthController::class, 'login']);
+    Route::post('/register', [App\Http\Controllers\Api\V1\AuthController::class, 'register']);
+
     // Public blog routes
     Route::get('/blog/posts', [App\Http\Controllers\Api\V1\BlogController::class, 'indexPosts']);
     Route::get('/blog/posts/{post}', [App\Http\Controllers\Api\V1\BlogController::class, 'showBlogPost']);

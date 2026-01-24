@@ -98,9 +98,9 @@ const DashboardLayout = ({ children }) => {
 
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'
+        className={`${sidebarOpen || mobileMenuOpen ? 'w-64' : 'w-0 lg:w-20'
           } ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-          } fixed lg:static inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 flex flex-col`}
+          } fixed inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 flex flex-col`}
       >
         <div className="p-4 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between mb-8">
@@ -126,8 +126,8 @@ const DashboardLayout = ({ children }) => {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive(item.path)
-                    ? 'bg-blue-500 text-white'
-                    : 'hover:bg-gray-100'
+                  ? 'bg-blue-500 text-white'
+                  : 'hover:bg-gray-100'
                   }`}
               >
                 <span className="text-xl">{item.icon}</span>
@@ -152,7 +152,8 @@ const DashboardLayout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+        }`}>
         {/* Header */}
         <header className="bg-white shadow-sm p-4">
           <div className="flex items-center justify-between">
