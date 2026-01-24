@@ -4,13 +4,13 @@ export async function POST(request) {
     try {
         const body = await request.json();
         // Forward to backend /v1/login endpoint
-        const response = await fetch(`${API_BASE_URL}/v1/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
+        // const response = await fetch(`${API_BASE_URL}/v1/login`, {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify(body)
+        // });
         const data = await response.json();
         if (!response.ok) {
             return NextResponse.json(data, {

@@ -44,6 +44,26 @@ class DatabaseSeeder extends Seeder
         );
         $vendor->assignRole('vendor');
 
+        // Create Vendor Profile (CRITICAL for visibility)
+        \App\Models\VendorProfile::firstOrCreate(
+            ['user_id' => $vendor->id],
+            [
+                'store_name' => 'Fresh Grocery Store',
+                'store_slug' => 'fresh-grocery-store',
+                'description' => 'Best fresh groceries in town',
+                'phone' => '+1234567890',
+                'email' => 'vendor@grocery.com',
+                'address' => '123 Market Street',
+                'city' => 'New York',
+                'state' => 'NY',
+                'country' => 'USA',
+                'postal_code' => '10001',
+                'status' => 'approved',
+                'is_verified' => true,
+                'commission_rate' => 10.00,
+            ]
+        );
+
         // Create demo customer
         $customer = User::firstOrCreate(
             ['email' => 'customer@grocery.com'],
@@ -69,5 +89,48 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $deliveryBoy->assignRole('delivery_boy');
+
+        // Create Categories
+        $fruits = \App\Models\Category::firstOrCreate(
+            ['slug' => 'fruits'],
+            ['name' => 'Fruits', 'description' => 'Fresh Fruits', 'is_active' => true, 'sort_order' => 1]
+        );
+        $vegetables = \App\Models\Category::firstOrCreate(
+            ['slug' => 'vegetables'],
+            ['name' => 'Vegetables', 'description' => 'Fresh Vegetables', 'is_active' => true, 'sort_order' => 2]
+        );
+
+        // Create Products
+        \App\Models\Product::firstOrCreate(
+            ['slug' => 'fresh-apple'],
+            [
+                'vendor_id' => $vendor->id,
+                'category_id' => $fruits->id,
+                'name' => 'Fresh Apple',
+                'description' => 'Sweet and crunchy apples',
+                'price' => 2.99,
+                'stock_quantity' => 100,
+                'track_stock' => true,
+                'is_active' => true,
+                'status' => 'approved',
+                'sku' => 'APPLE-001',
+            ]
+        );
+
+        \App\Models\Product::firstOrCreate(
+            ['slug' => 'fresh-carrot'],
+            [
+                'vendor_id' => $vendor->id,
+                'category_id' => $vegetables->id,
+                'name' => 'Fresh Carrot',
+                'description' => 'Organic carrots',
+                'price' => 1.50,
+                'stock_quantity' => 50,
+                'track_stock' => true,
+                'is_active' => true,
+                'status' => 'approved',
+                'sku' => 'CARROT-001',
+            ]
+        );
     }
 }

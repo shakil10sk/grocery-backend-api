@@ -40,16 +40,24 @@ class ProductController extends BaseController
         
         $query = Product::with(['category', 'vendor', 'images', 'variations']);
 
-        // Vendors see only their products, Admins see all
-        if ($user->isVendor()) {
-            $query->where('vendor_id', $user->id);
-        } elseif ($user->isCustomer()) {
-            // Customers see only approved and active products
-            $query->approved();
+        // If user is authenticated, apply role-based filtering
+        if ($user) {
+            // Vendors see only their products
+            if ($user->isVendor()) {
+                $query->where('vendor_id', $user->id);
+            } elseif ($user->isCustomer()) {
+                // Customers see only approved and active products
+                $query->approved();
+            }
+            // Admins see all products (no filter)
+        } else {
+            // Public/unauthenticated users see only approved and active products
+            $query->where('status', 'approved')
+                  ->where('is_active', true);
         }
 
         // Filters
-        if ($request->has('vendor_id') && $user->isAdmin()) {
+        if ($request->has('vendor_id') && ($user && $user->isAdmin())) {
             $query->where('vendor_id', $request->vendor_id);
         }
 
@@ -57,7 +65,7 @@ class ProductController extends BaseController
             $query->where('category_id', $request->category_id);
         }
 
-        if ($request->has('status') && ($user->isAdmin() || $user->isVendor())) {
+        if ($request->has('status') && ($user && ($user->isAdmin() || $user->isVendor()))) {
             $query->where('status', $request->status);
         }
 
@@ -70,7 +78,8 @@ class ProductController extends BaseController
             });
         }
 
-        $products = $query->latest()->paginate(15);
+        $limit = $request->input('limit', 15);
+        $products = $query->latest()->paginate($limit);
 
         return $this->paginatedResponse(
             $products->through(fn($product) => new ProductResource($product)),
@@ -163,14 +172,22 @@ class ProductController extends BaseController
     {
         $user = auth()->user();
 
-        // Vendors can only see their own products
-        if ($user->isVendor() && $product->vendor_id !== $user->id) {
-            return $this->errorResponse('Product not found', 404);
-        }
+        // If user is authenticated, apply role-based access control
+        if ($user) {
+            // Vendors can only see their own products
+            if ($user->isVendor() && $product->vendor_id !== $user->id) {
+                return $this->errorResponse('Product not found', 404);
+            }
 
-        // Customers can only see approved products
-        if ($user->isCustomer() && ($product->status !== 'approved' || !$product->is_active)) {
-            return $this->errorResponse('Product not found', 404);
+            // Customers can only see approved products
+            if ($user->isCustomer() && ($product->status !== 'approved' || !$product->is_active)) {
+                return $this->errorResponse('Product not found', 404);
+            }
+        } else {
+            // Public/unauthenticated users can only see approved and active products
+            if ($product->status !== 'approved' || !$product->is_active) {
+                return $this->errorResponse('Product not found', 404);
+            }
         }
 
         $product->load(['category', 'vendor', 'images', 'variations', 'reviews']);

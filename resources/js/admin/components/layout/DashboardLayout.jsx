@@ -56,7 +56,7 @@ const DashboardLayout = ({ children }) => {
         setSidebarOpen(false);
       }
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -98,11 +98,9 @@ const DashboardLayout = ({ children }) => {
 
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-0 lg:w-20'
-        } ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } fixed lg:static inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 flex flex-col`}
+        className={`${sidebarOpen ? 'w-64' : 'w-0 lg:w-20'
+          } ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          } fixed lg:static inset-y-0 left-0 z-50 bg-white shadow-lg transition-all duration-300 flex flex-col`}
       >
         <div className="p-4 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between mb-8">
@@ -127,11 +125,10 @@ const DashboardLayout = ({ children }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                  isActive(item.path)
+                className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${isActive(item.path)
                     ? 'bg-blue-500 text-white'
                     : 'hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <span className="text-xl">{item.icon}</span>
                 {sidebarOpen && <span>{item.label}</span>}

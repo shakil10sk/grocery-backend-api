@@ -9,7 +9,6 @@ export const api = axios.create({
     'Accept': 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
-  withCredentials: true,
 });
 
 // Add CSRF token to requests
@@ -32,7 +31,7 @@ api.interceptors.response.use(
       const currentPath = window.location.pathname;
       if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
         // Only redirect if accessing protected resources
-        window.location.href = '/login';
+        // window.location.href = '/login';
       }
     }
     return Promise.reject(error);

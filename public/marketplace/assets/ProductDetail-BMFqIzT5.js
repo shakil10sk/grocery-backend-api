@@ -1,0 +1,1 @@
+import{j as t}from"./QueryClientProvider-OSMiSIp-.js";function a(){return t.jsx("div",{className:"p-8",children:t.jsx("h1",{className:"text-2xl font-bold",children:"Product Detail Page"})})}export{a as default};

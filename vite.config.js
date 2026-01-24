@@ -6,37 +6,55 @@ import path from 'path';
 export default defineConfig({
     plugins: [
         laravel({
-            input: [
-                'resources/css/app.css',
-                'resources/js/marketplace/main.jsx',
-                'resources/js/admin/main.jsx',
-            ],
+            input: ['resources/css/app.css', 'resources/js/app.jsx'],
             refresh: true,
         }),
-        react({
-            include: /\.[jt]sx?$/,
-            exclude: /node_modules/,
-            jsxRuntime: 'automatic',
-            fastRefresh: true,
-        }),
+        // tailwindcss(),
+        react(),
     ],
-    resolve: {
-        alias: {
-            '@': path.resolve(__dirname, './resources/js'),
-        },
-    },
-    build: {
-        rollupOptions: {
-            output: {
-                manualChunks: undefined,
-            },
-        },
-    },
     server: {
-        hmr: {
-            host: 'localhost',
-            port: 5173,
+        watch: {
+            ignored: ['**/storage/framework/views/**'],
         },
     },
 });
+// export default defineConfig({
+//     plugins: [
+//         laravel({
+//             input: [
+//                 'resources/css/app.css',
+//                 'resources/js/App.jsx',
+//                 // 'resources/js/marketplace/main.jsx',
+//                 // 'resources/js/admin/main.jsx',
+//             ],
+//             refresh: true,
+//         }),
+//         react(
+//         //     {
+//         //     include: /\.[jt]sx?$/,
+//         //     exclude: /node_modules/,
+//         //     jsxRuntime: 'automatic',
+//         //     fastRefresh: true,
+//         // }
+//     ),
+//     ],
+//     resolve: {
+//         alias: {
+//             '@': path.resolve(__dirname, './resources/js'),
+//         },
+//     },
+//     build: {
+//         rollupOptions: {
+//             output: {
+//                 manualChunks: undefined,
+//             },
+//         },
+//     },
+//     server: {
+//         hmr: {
+//             host: 'localhost',
+//             port: 5173,
+//         },
+//     },
+// });
 

@@ -6,6 +6,7 @@ export const authService = {
    * Login user
    */
   login: async (credentials) => {
+    // console.log(API_ENDPOINTS.LOGIN, '323232');
     const response = await apiService.post(API_ENDPOINTS.LOGIN, credentials);
     
     if (response.success && response.data.token) {

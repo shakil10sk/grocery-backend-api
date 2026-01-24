@@ -16,31 +16,29 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', [App\Http\Controllers\Api\V1\HealthController::class, 'check']);
 
-// Public routes (authentication, etc.)
+
+// Public API routes (no auth required)
 Route::prefix('v1')->group(function () {
-    // Authentication routes
-    Route::post('/register', [App\Http\Controllers\Api\V1\AuthController::class, 'register']);
-    Route::post('/login', [App\Http\Controllers\Api\V1\AuthController::class, 'login']);
-    
     // Public blog routes
     Route::get('/blog/posts', [App\Http\Controllers\Api\V1\BlogController::class, 'indexPosts']);
     Route::get('/blog/posts/{post}', [App\Http\Controllers\Api\V1\BlogController::class, 'showBlogPost']);
     Route::get('/blog/posts/{post}/comments', [App\Http\Controllers\Api\V1\BlogController::class, 'indexComments']);
     Route::get('/blog/categories', [App\Http\Controllers\Api\V1\BlogCategoryController::class, 'index']);
-    
     // Public settings routes
     Route::get('/settings', [App\Http\Controllers\Api\V1\SettingsController::class, 'getAllSettings']);
     Route::get('/settings/contact', [App\Http\Controllers\Api\V1\SettingsController::class, 'getContact']);
     Route::get('/settings/footer', [App\Http\Controllers\Api\V1\SettingsController::class, 'getFooter']);
     Route::get('/settings/header', [App\Http\Controllers\Api\V1\SettingsController::class, 'getHeader']);
-    
     // Public slider routes
     Route::get('/sliders', [App\Http\Controllers\Api\V1\SliderController::class, 'index']);
     Route::get('/sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'show']);
-    
-    // Public products and categories routes
+    // Public products, vendors, categories, and amounts
     Route::get('/products', [App\Http\Controllers\Api\V1\ProductController::class, 'index']);
     Route::get('/products/{product}', [App\Http\Controllers\Api\V1\ProductController::class, 'show']);
+    Route::get('/vendors', [App\Http\Controllers\Api\V1\VendorController::class, 'index']);
+    Route::get('/categories', [App\Http\Controllers\Api\V1\CategoryController::class, 'index']);
+    Route::get('/categories/{category}', [App\Http\Controllers\Api\V1\CategoryController::class, 'show']);
+    Route::get('/amounts', [App\Http\Controllers\Api\V1\AmountController::class, 'index']);
 });
 
 // Protected routes
@@ -67,7 +65,7 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
     Route::post('categories/{category}/toggle-status', [App\Http\Controllers\Api\V1\CategoryController::class, 'toggleStatus'])->middleware('role:admin');
     
     // Product routes
-    Route::apiResource('products', App\Http\Controllers\Api\V1\ProductController::class);
+    Route::apiResource('products', App\Http\Controllers\Api\V1\ProductController::class)->except(['index', 'show']);
     Route::post('products/{product}/approve', [App\Http\Controllers\Api\V1\ProductController::class, 'approve'])->middleware('role:admin');
     Route::post('products/{product}/reject', [App\Http\Controllers\Api\V1\ProductController::class, 'reject'])->middleware('role:admin');
     Route::post('products/{product}/stock', [App\Http\Controllers\Api\V1\ProductController::class, 'updateStock']);
@@ -112,32 +110,31 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
     Route::put('settings/footer', [App\Http\Controllers\Api\V1\SettingsController::class, 'updateFooter'])->middleware('role:admin');
     Route::put('settings/header', [App\Http\Controllers\Api\V1\SettingsController::class, 'updateHeader'])->middleware('role:admin');
     
-    // Slider routes (admin only)
-    Route::get('sliders/all', [App\Http\Controllers\Api\V1\SliderController::class, 'indexAll'])->middleware('role:admin');
-    Route::post('sliders', [App\Http\Controllers\Api\V1\SliderController::class, 'store'])->middleware('role:admin');
-    Route::put('sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'update'])->middleware('role:admin');
-    Route::delete('sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'destroy'])->middleware('role:admin');
-    Route::post('sliders/{slider}/toggle', [App\Http\Controllers\Api\V1\SliderController::class, 'toggle'])->middleware('role:admin');
-    Route::post('sliders/reorder', [App\Http\Controllers\Api\V1\SliderController::class, 'reorder'])->middleware('role:admin');
-    
-    // Cart routes
-    Route::get('cart', [App\Http\Controllers\Api\V1\CartController::class, 'index']);
-    Route::post('cart', [App\Http\Controllers\Api\V1\CartController::class, 'store']);
-    Route::put('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'update']);
-    Route::delete('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'destroy']);
-    Route::delete('cart', [App\Http\Controllers\Api\V1\CartController::class, 'clear']);
-    Route::post('cart/merge', [App\Http\Controllers\Api\V1\CartController::class, 'merge']);
-    
-    // Order routes
-    Route::apiResource('orders', App\Http\Controllers\Api\V1\OrderController::class);
-    Route::post('orders/{order}/status', [App\Http\Controllers\Api\V1\OrderController::class, 'updateStatus']);
-    Route::post('orders/{order}/cancel', [App\Http\Controllers\Api\V1\OrderController::class, 'cancel']);
-    
-    // Vendor Reports routes (vendor & admin only)
-    Route::prefix('reports')->middleware('role:vendor,admin')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\V1\VendorReportController::class, 'index']);
-        Route::get('/show/{date}', [App\Http\Controllers\Api\V1\VendorReportController::class, 'show']);
-        Route::post('/generate', [App\Http\Controllers\Api\V1\VendorReportController::class, 'generate']);
-    });
 });
+    // Admin-protected routes (auth:api + admin role)
+    Route::prefix('v1')->middleware(['auth:api', 'role:admin'])->group(function () {
+        // Profile routes (admin only)
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [App\Http\Controllers\Api\V1\ProfileController::class, 'show']);
+            Route::put('/', [App\Http\Controllers\Api\V1\ProfileController::class, 'update']);
+            Route::post('/avatar', [App\Http\Controllers\Api\V1\ProfileController::class, 'uploadAvatar']);
+            Route::post('/fcm-token', [App\Http\Controllers\Api\V1\ProfileController::class, 'updateFcmToken']);
+        });
+        // Checkout, payment, order history, cart, etc. (admin only)
+        Route::get('cart', [App\Http\Controllers\Api\V1\CartController::class, 'index']);
+        Route::post('cart', [App\Http\Controllers\Api\V1\CartController::class, 'store']);
+        Route::put('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'update']);
+        Route::delete('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'destroy']);
+        Route::delete('cart', [App\Http\Controllers\Api\V1\CartController::class, 'clear']);
+        Route::post('cart/merge', [App\Http\Controllers\Api\V1\CartController::class, 'merge']);
+        // Order routes (admin only)
+        Route::apiResource('orders', App\Http\Controllers\Api\V1\OrderController::class);
+        Route::post('orders/{order}/status', [App\Http\Controllers\Api\V1\OrderController::class, 'updateStatus']);
+        Route::post('orders/{order}/cancel', [App\Http\Controllers\Api\V1\OrderController::class, 'cancel']);
+        // Payment routes (admin only) - add as needed
+        // ...
+    });
+    Route::prefix('reports')->middleware('role:vendor,admin')->group(function () {
 
+        Route::get('/', [App\Http\Controllers\Api\V1\VendorReportController::class, 'index']);
+    });

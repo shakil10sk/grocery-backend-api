@@ -10,9 +10,9 @@
     <meta property="og:type" content="website" />
     <title>Grosarry</title>
     @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/js/main.jsx'])
+    @vite(['resources/css/app.css', 'resources/js/App.jsx'])
   </head>
   <body>
-    <div id="root"></div>
+    <div id="app"></div>
   </body>
 </html>

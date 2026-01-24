@@ -54,10 +54,10 @@ export default function CheckoutPage() {
                 [e.target.name]: e.target.value
             }));
     };
-    const handleGoToLogin = ()=>{
-        const q = preAuth.email ? `?email=${encodeURIComponent(preAuth.email)}` : '';
-        navigate(`/auth/login${q}`);
-    };
+    // const handleGoToLogin = ()=>{
+    //     const q = preAuth.email ? `?email=${encodeURIComponent(preAuth.email)}` : '';
+    //     navigate(`/auth/login${q}`);
+    // };
     const handleAutoSignup = async ()=>{
         if (!preAuth.email) {
             alert('Please provide an email to create an account.');
