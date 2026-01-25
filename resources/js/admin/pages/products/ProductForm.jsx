@@ -26,6 +26,7 @@ const ProductForm = () => {
     is_featured: false,
     allow_reviews: false,
   });
+  const [errors, setErrors] = useState({});
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
@@ -71,6 +72,12 @@ const ProductForm = () => {
         navigate('/products');
       }
     },
+    onError: (error) => {
+      console.error('Create product error:', error);
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
+    },
   });
 
   const updateMutation = useMutation({
@@ -79,6 +86,12 @@ const ProductForm = () => {
       queryClient.invalidateQueries(['products']);
       queryClient.invalidateQueries(['product', id]);
       navigate('/products');
+    },
+    onError: (error) => {
+      console.error('Update product error:', error);
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
     },
   });
 
@@ -143,8 +156,9 @@ const ProductForm = () => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name[0]}</p>}
           </div>
 
           <div className="md:col-span-2">
@@ -179,7 +193,7 @@ const ProductForm = () => {
               value={formData.category_id}
               onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.category_id ? 'border-red-500' : 'border-gray-300'}`}
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
@@ -188,6 +202,7 @@ const ProductForm = () => {
                 </option>
               ))}
             </select>
+            {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id[0]}</p>}
           </div>
 
           <div>
@@ -198,8 +213,9 @@ const ProductForm = () => {
               type="text"
               value={formData.sku}
               onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.sku ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.sku && <p className="text-red-500 text-xs mt-1">{errors.sku[0]}</p>}
           </div>
 
           <div>
@@ -212,8 +228,9 @@ const ProductForm = () => {
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price[0]}</p>}
           </div>
 
           <div>
@@ -225,8 +242,9 @@ const ProductForm = () => {
               step="0.01"
               value={formData.compare_at_price}
               onChange={(e) => setFormData({ ...formData, compare_at_price: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.compare_at_price ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.compare_at_price && <p className="text-red-500 text-xs mt-1">{errors.compare_at_price[0]}</p>}
           </div>
 
           <div>
@@ -238,8 +256,9 @@ const ProductForm = () => {
               value={formData.stock_quantity}
               onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.stock_quantity ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.stock_quantity && <p className="text-red-500 text-xs mt-1">{errors.stock_quantity[0]}</p>}
           </div>
 
           <div>
@@ -337,8 +356,8 @@ const ProductForm = () => {
             {createMutation.isLoading || updateMutation.isLoading
               ? 'Saving...'
               : isEditing
-              ? 'Update Product'
-              : 'Create Product'}
+                ? 'Update Product'
+                : 'Create Product'}
           </button>
         </div>
       </form>

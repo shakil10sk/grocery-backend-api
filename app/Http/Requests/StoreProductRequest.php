@@ -4,6 +4,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Log;
 
 class StoreProductRequest extends FormRequest
 {
@@ -56,5 +59,23 @@ class StoreProductRequest extends FormRequest
             'compare_at_price.gt' => 'Compare at price must be greater than regular price.',
             'sku.unique' => 'This SKU is already in use.',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        Log::error('Product Validation Failed:', [
+            'errors' => $validator->errors()->toArray(),
+            'input' => $this->all(),
+            'user_id' => auth()->id(),
+        ]);
+
+        throw new HttpResponseException(response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422));
     }
 }

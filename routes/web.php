@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\Route;
 // });
 Route::view('/', 'app');
 
-// Marketplace SPA - catch all routes (must be last)
-// Route::view('/{any?}', 'welcome')->where('any', '.*')->name('marketplace');
+Route::prefix('admin')->group(function () {
+    Route::view('/{any?}', 'app')->where('any', '.*');
+});
 
-Route::view('/admin/{any?}', 'app')->where('any', '.*');
-Route::view('/marketplace/{any?}', 'app')->where('any', '.*');
+// Marketplace SPA - catch all other routes EXCEPT api
+Route::view('/{any?}', 'app')->where('any', '^(?!api).*$');

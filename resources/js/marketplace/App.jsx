@@ -12,6 +12,7 @@ const CheckoutPage = lazy(() => import('./pages/Checkout'))
 const RegisterPage = lazy(() => import('./pages/Register'))
 const ProfilePage = lazy(() => import('./pages/Profile'))
 const OrdersPage = lazy(() => import('./pages/Orders'))
+const WishlistPage = lazy(() => import('./pages/Wishlist'))
 
 // New Pages
 const VendorsPage = lazy(() => import('./pages/Vendors'))
@@ -23,25 +24,37 @@ const LoadingFallback = () => (
   </div>
 )
 
+import { AuthProvider } from './context/AuthContext'
+import { CartProvider } from './context/CartContext'
+import { WishlistProvider } from './context/WishlistContext'
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/products/:id" element={<ProductDetailPage />} />
-            <Route path="/vendors" element={<VendorsPage />} />
-            <Route path="/vendors/:id" element={<VendorDetailsPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            {/* <Route path="/checkout" element={<CheckoutPage />} /> */}
-            <Route path="/register" element={<RegisterPage />} />
-            {/* <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/orders" element={<OrdersPage />} /> */}
-          </Routes>
-        </Suspense>
-      </Router>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <Router>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/vendors" element={<VendorsPage />} />
+                  <Route path="/vendors/:id" element={<VendorDetailsPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/orders" element={<OrdersPage />} />
+                  <Route path="/wishlist" element={<WishlistPage />} />
+                  <Route path="/login" element={<RegisterPage />} /> {/* Using Register for now as Login/Signup usually same page or similar */}
+                </Routes>
+              </Suspense>
+            </Router>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

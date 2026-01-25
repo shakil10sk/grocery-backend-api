@@ -73,4 +73,12 @@ class Category extends Model
     {
         return $query->whereNull('parent_id');
     }
+
+    /**
+     * Scope for root categories
+     */
+    public function scopeRoot($query)
+    {
+        return $query->whereNull('parent_id');
+    }
 }

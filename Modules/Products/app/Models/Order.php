@@ -106,4 +106,16 @@ class Order extends Model
     {
         return in_array($this->status, ['pending', 'confirmed']);
     }
+
+    /**
+     * Update order status
+     */
+    public function updateStatus(string $status): void
+    {
+        $this->update(['status' => $status]);
+        
+        if ($status === 'delivered') {
+            $this->update(['delivered_at' => now(), 'payment_status' => 'paid']);
+        }
+    }
 }

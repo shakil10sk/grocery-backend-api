@@ -114,4 +114,24 @@ class VendorController extends BaseController
             'Vendor retrieved successfully'
         );
     }
+
+    /**
+     * Get top vendors
+     */
+    public function top(): JsonResponse
+    {
+        $vendors = User::role('vendor')
+            ->where('status', 'active')
+            ->whereHas('vendorProfile', function($q) {
+                $q->where('is_verified', true);
+            })
+            ->with('vendorProfile')
+            ->limit(10)
+            ->get();
+
+        return $this->successResponse(
+            VendorResource::collection($vendors),
+            'Top vendors retrieved successfully'
+        );
+    }
 }

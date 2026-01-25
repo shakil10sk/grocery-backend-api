@@ -40,6 +40,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/products', [App\Http\Controllers\Api\V1\ProductController::class, 'index']);
     Route::get('/products/{product}', [App\Http\Controllers\Api\V1\ProductController::class, 'show']);
     Route::get('/vendors', [App\Http\Controllers\Api\V1\VendorController::class, 'index']);
+    Route::get('/vendors/top', [App\Http\Controllers\Api\V1\VendorController::class, 'top']);
+    Route::get('/vendors/{id}', [App\Http\Controllers\Api\V1\VendorController::class, 'show']);
     Route::get('/categories', [App\Http\Controllers\Api\V1\CategoryController::class, 'index']);
     Route::get('/categories/{category}', [App\Http\Controllers\Api\V1\CategoryController::class, 'show']);
     Route::get('/amounts', [App\Http\Controllers\Api\V1\AmountController::class, 'index']);
@@ -59,10 +61,10 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
         Route::post('/avatar', [App\Http\Controllers\Api\V1\ProfileController::class, 'uploadAvatar']);
         Route::post('/fcm-token', [App\Http\Controllers\Api\V1\ProfileController::class, 'updateFcmToken']);
     });
+
+    // Address routes
+    Route::apiResource('addresses', App\Http\Controllers\Api\V1\AddressController::class);
     
-    // Category routes
-    Route::get('categories', [App\Http\Controllers\Api\V1\CategoryController::class, 'index']);
-    Route::get('categories/{category}', [App\Http\Controllers\Api\V1\CategoryController::class, 'show']);
     Route::post('categories', [App\Http\Controllers\Api\V1\CategoryController::class, 'store'])->middleware('role:admin');
     Route::put('categories/{category}', [App\Http\Controllers\Api\V1\CategoryController::class, 'update'])->middleware('role:admin');
     Route::delete('categories/{category}', [App\Http\Controllers\Api\V1\CategoryController::class, 'destroy'])->middleware('role:admin');
@@ -114,31 +116,22 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
     Route::put('settings/footer', [App\Http\Controllers\Api\V1\SettingsController::class, 'updateFooter'])->middleware('role:admin');
     Route::put('settings/header', [App\Http\Controllers\Api\V1\SettingsController::class, 'updateHeader'])->middleware('role:admin');
     
-});
-    // Admin-protected routes (auth:api + admin role)
-    Route::prefix('v1')->middleware(['auth:api', 'role:admin'])->group(function () {
-        // Profile routes (admin only)
-        Route::prefix('profile')->group(function () {
-            Route::get('/', [App\Http\Controllers\Api\V1\ProfileController::class, 'show']);
-            Route::put('/', [App\Http\Controllers\Api\V1\ProfileController::class, 'update']);
-            Route::post('/avatar', [App\Http\Controllers\Api\V1\ProfileController::class, 'uploadAvatar']);
-            Route::post('/fcm-token', [App\Http\Controllers\Api\V1\ProfileController::class, 'updateFcmToken']);
-        });
-        // Checkout, payment, order history, cart, etc. (admin only)
-        Route::get('cart', [App\Http\Controllers\Api\V1\CartController::class, 'index']);
-        Route::post('cart', [App\Http\Controllers\Api\V1\CartController::class, 'store']);
-        Route::put('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'update']);
-        Route::delete('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'destroy']);
-        Route::delete('cart', [App\Http\Controllers\Api\V1\CartController::class, 'clear']);
-        Route::post('cart/merge', [App\Http\Controllers\Api\V1\CartController::class, 'merge']);
-        // Order routes (admin only)
-        Route::apiResource('orders', App\Http\Controllers\Api\V1\OrderController::class);
-        Route::post('orders/{order}/status', [App\Http\Controllers\Api\V1\OrderController::class, 'updateStatus']);
-        Route::post('orders/{order}/cancel', [App\Http\Controllers\Api\V1\OrderController::class, 'cancel']);
-        // Payment routes (admin only) - add as needed
-        // ...
-    });
-    Route::prefix('reports')->middleware('role:vendor,admin')->group(function () {
+    // Cart routes
+    Route::get('cart', [App\Http\Controllers\Api\V1\CartController::class, 'index']);
+    Route::post('cart', [App\Http\Controllers\Api\V1\CartController::class, 'store']);
+    Route::put('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'update']);
+    Route::delete('cart/{cart}', [App\Http\Controllers\Api\V1\CartController::class, 'destroy']);
+    Route::delete('cart', [App\Http\Controllers\Api\V1\CartController::class, 'clear']);
+    Route::post('cart/merge', [App\Http\Controllers\Api\V1\CartController::class, 'merge']);
 
+    // Order routes
+    Route::apiResource('orders', App\Http\Controllers\Api\V1\OrderController::class);
+    Route::post('orders/{order}/status', [App\Http\Controllers\Api\V1\OrderController::class, 'updateStatus']);
+    Route::post('orders/{order}/cancel', [App\Http\Controllers\Api\V1\OrderController::class, 'cancel']);
+
+    // Reports (Vendors & Admins)
+    Route::prefix('reports')->middleware('role:vendor,admin')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\V1\VendorReportController::class, 'index']);
     });
+});
+

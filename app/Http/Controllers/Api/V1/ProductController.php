@@ -57,8 +57,12 @@ class ProductController extends BaseController
         }
 
         // Filters
-        if ($request->has('vendor_id') && ($user && $user->isAdmin())) {
+        if ($request->has('vendor_id')) {
             $query->where('vendor_id', $request->vendor_id);
+        }
+
+        if ($request->boolean('featured')) {
+            $query->featured();
         }
 
         if ($request->has('category_id')) {
@@ -131,6 +135,7 @@ class ProductController extends BaseController
             'slug' => Product::generateSlug($request->name),
             'description' => $request->description,
             'short_description' => $request->short_description,
+            'video_url' => $request->video_url,
             'sku' => $request->sku,
             'price' => $request->price,
             'compare_at_price' => $request->compare_at_price,
@@ -141,6 +146,7 @@ class ProductController extends BaseController
             'is_featured' => $request->is_featured ?? false,
             'status' => 'pending', // Requires admin approval
             'is_active' => false, // Inactive until approved
+            'meta' => $request->meta,
         ]);
 
         $product->load(['category', 'vendor', 'images', 'variations']);
