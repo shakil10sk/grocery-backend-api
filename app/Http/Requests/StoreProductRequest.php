@@ -15,6 +15,7 @@ class StoreProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        dd(auth()->user()->isVendor());
         if(env('APP_ENV') == 'local') {
             return true;
         }

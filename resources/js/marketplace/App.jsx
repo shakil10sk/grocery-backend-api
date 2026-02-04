@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import queryClient from '@/shared/queryClient'
 import { lazy, Suspense } from 'react'
@@ -14,9 +14,13 @@ const ProfilePage = lazy(() => import('./pages/Profile'))
 const OrdersPage = lazy(() => import('./pages/Orders'))
 const WishlistPage = lazy(() => import('./pages/Wishlist'))
 
-// New Pages
 const VendorsPage = lazy(() => import('./pages/Vendors'))
 const VendorDetailsPage = lazy(() => import('./pages/VendorDetails'))
+const VendorAuthPage = lazy(() => import('./pages/VendorAuth'))
+const VendorDashboardPage = lazy(() => import('./pages/VendorDashboard'))
+const VendorProductsPage = lazy(() => import('./pages/VendorProducts'))
+const VendorProductFormPage = lazy(() => import('./pages/VendorProductForm'))
+const VendorLayout = lazy(() => import('./components/layouts/VendorLayout'))
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -49,6 +53,18 @@ function App() {
                   <Route path="/orders" element={<OrdersPage />} />
                   <Route path="/wishlist" element={<WishlistPage />} />
                   <Route path="/login" element={<RegisterPage />} /> {/* Using Register for now as Login/Signup usually same page or similar */}
+                  <Route path="/auth/vendor" element={<VendorAuthPage />} />
+                  <Route path="/become-vendor" element={<VendorAuthPage />} />
+
+                  {/* Vendor Routes with Layout */}
+                  <Route path="/vendor" element={<VendorLayout />}>
+                    <Route path="dashboard" element={<VendorDashboardPage />} />
+                    <Route path="products" element={<VendorProductsPage />} />
+                    <Route path="products/new" element={<VendorProductFormPage />} />
+                    <Route path="products/:id/edit" element={<VendorProductFormPage />} />
+                    <Route path="orders" element={<OrdersPage />} /> {/* Reuse Order page or create new? */}
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                  </Route>
                 </Routes>
               </Suspense>
             </Router>

@@ -128,6 +128,7 @@ class ProductController extends BaseController
     )]
     public function store(StoreProductRequest $request): JsonResponse
     {
+        dd($request->all());
         $product = Product::create([
             'vendor_id' => auth()->id(),
             'category_id' => $request->category_id,
@@ -148,7 +149,7 @@ class ProductController extends BaseController
             'is_active' => false, // Inactive until approved
             'meta' => $request->meta,
         ]);
-
+dd($product, 32);
         $product->load(['category', 'vendor', 'images', 'variations']);
 
         return $this->successResponse(
@@ -275,18 +276,29 @@ class ProductController extends BaseController
             new OA\Response(response: 404, description: "Product not found"),
         ]
     )]
-    public function destroy(Product $product): JsonResponse
+    public function destroy($id): JsonResponse
     {
-        $user = auth()->user();
+        try{
+            $user = auth()->user();
+            if(empty($user)){
+                return $this->errorResponse('Unauthorized', 403);
+            }
+            $product = Product::findOrFail($id);
+            if(empty($product)) {
+                return $this->errorResponse('Product not found.', 400);
+            }
 
-        // Vendors can only delete their own products
-        if ($user->isVendor() && $product->vendor_id !== $user->id) {
-            return $this->errorResponse('Unauthorized', 403);
+            // Vendors and admin can only delete their own products
+            if (($user->isVendor() && $product->vendor_id !== $user->id) || !$user->isAdmin()) {
+                return $this->errorResponse('Unauthorized', 403);
+            }
+
+            $product->delete();
+
+            return $this->successResponse(null, 'Product deleted successfully');
+        }catch(Exception $e){
+            return $this->errorResponse($e->getMessage(), 500);
         }
-
-        $product->delete();
-
-        return $this->successResponse(null, 'Product deleted successfully');
     }
 
     /**
@@ -306,8 +318,10 @@ class ProductController extends BaseController
             new OA\Response(response: 404, description: "Product not found"),
         ]
     )]
-    public function approve(Product $product): JsonResponse
+    public function approve($id): JsonResponse
     {
+        $product = Product::findOrFail($id);
+
         if (!auth()->user()->isAdmin()) {
             return $this->errorResponse('Unauthorized. Admin access required.', 403);
         }
@@ -351,8 +365,9 @@ class ProductController extends BaseController
             new OA\Response(response: 404, description: "Product not found"),
         ]
     )]
-    public function reject(Request $request, Product $product): JsonResponse
+    public function reject(Request $request, $id): JsonResponse
     {
+        $product = Product::findOrFail($id);
         if (!auth()->user()->isAdmin()) {
             return $this->errorResponse('Unauthorized. Admin access required.', 403);
         }

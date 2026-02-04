@@ -89,19 +89,17 @@ const HomeSlider = () => {
                             <div
                                 className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent"
                                 style={{
-                                    opacity: slide.overlay_opacity || 0.5
+                                    opacity: (slide.overlay_opacity ? slide.overlay_opacity / 100 : 0.5) // Fix: opacity usually 0-1 or 0-100, backend sends string '30'
                                 }}
                             />
 
                             {/* Content */}
                             <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-16 lg:px-24">
                                 <div className="max-w-2xl">
-                                    {/* Badge */}
-                                    {slide.link_text && (
-                                        <div className="inline-block px-3 py-1 bg-yellow-500 text-white text-xs font-medium rounded-full mb-4">
-                                            {slide.link_text}
-                                        </div>
-                                    )}
+                                    {/* Badge - Optional: Use a static text or another field if available. Using 'Featured' or hardcoded logic for now as link_text is for button */}
+                                    <div className="inline-block px-3 py-1 bg-yellow-500 text-white text-xs font-medium rounded-full mb-4">
+                                        Special Offer
+                                    </div>
 
                                     {/* Title */}
                                     {slide.title && (
@@ -132,7 +130,7 @@ const HomeSlider = () => {
                                                 backgroundColor: slide.button_color || '#059669'
                                             }}
                                         >
-                                            Shop Now
+                                            {slide.link_text || 'Shop Now'}
                                         </a>
                                     )}
                                 </div>

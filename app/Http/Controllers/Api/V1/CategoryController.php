@@ -176,25 +176,32 @@ class CategoryController extends BaseController
             new OA\Response(response: 403, description: "Forbidden - Admin only"),
         ]
     )]
-    public function destroy(Category $category): JsonResponse
+    public function destroy($id): JsonResponse
     {
-        if (!auth()->user()->isAdmin()) {
-            return $this->errorResponse('Unauthorized. Admin access required.', 403);
+        try{
+            if (!auth()->user()->isAdmin()) {
+                return $this->errorResponse('Unauthorized. Admin access required.', 403);
+            }
+
+            $category = Category::findOrFail($id);
+            if(empty($category)) {
+                return $this->errorResponse('Category not found.', 400);
+            }
+            // Check if category has products
+            if ($category->products()->count() > 0) {
+                return $this->errorResponse('Cannot delete category with existing products.', 422);
+            }
+
+            // Delete image if exists
+            if ($category->image && Storage::disk('public')->exists($category->image)) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $category->delete();
+
+            return $this->successResponse(null, 'Category deleted successfully');
+        }catch(Exception $e){
+            return $this->errorResponse($e->getMessage(), 500);
         }
-
-        // Check if category has products
-        if ($category->products()->count() > 0) {
-            return $this->errorResponse('Cannot delete category with existing products.', 422);
-        }
-
-        // Delete image if exists
-        if ($category->image && Storage::disk('public')->exists($category->image)) {
-            Storage::disk('public')->delete($category->image);
-        }
-
-        $category->delete();
-
-        return $this->successResponse(null, 'Category deleted successfully');
     }
 
     /**
