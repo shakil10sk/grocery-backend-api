@@ -4,7 +4,7 @@ import api from '@/shared/api'
 import { categoryService, vendorService } from '../services/product'
 import HomeSlider from '../components/Slider'
 import CategoryList from '../components/CategoryList'
-import VendorList from '../components/VendorList'
+import TopRatedVendors from '../components/TopRatedVendors'
 import ProductCard from '../components/ProductCard'
 import MarketplaceLayout from '../components/layouts/MarketplaceLayout'
 
@@ -43,34 +43,38 @@ export default function HomePage() {
 
   return (
     <MarketplaceLayout>
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-12">
-        {/* Slider Section */}
-        <section>
+      <main className="space-y-0">
+        {/* Top Rated Vendors Section - First */}
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <TopRatedVendors vendors={vendors} loading={loading} />
+        </div>
+
+        {/* Slider Section - Second */}
+        <section className="max-w-7xl mx-auto px-4">
           <HomeSlider />
         </section>
 
-        {/* Categories Section */}
-        <section>
-          <CategoryList categories={categories} loading={loading} />
-        </section>
+        {/* Rest of the content */}
+        <div className="max-w-7xl mx-auto px-4 py-6 space-y-8 sm:space-y-12">
 
-        {/* Featured Products Section */}
-        <section>
-          <div className="flex justify-between items-end mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
-            <Link to="/products" className="text-green-600 hover:text-green-700 font-medium text-sm">View All &rarr;</Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
+          {/* Categories Section */}
+          <section>
+            <CategoryList categories={categories} loading={loading} />
+          </section>
 
-        {/* Featured Vendors Section */}
-        <section>
-          <VendorList vendors={vendors} loading={loading} />
-        </section>
+          {/* Featured Products Section */}
+          <section>
+            <div className="flex justify-between items-end mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
+              <Link to="/products" className="text-emerald-600 hover:text-emerald-700 font-medium text-sm">View All &rarr;</Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        </div>
       </main>
     </MarketplaceLayout>
   )

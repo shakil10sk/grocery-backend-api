@@ -123,11 +123,28 @@ class VendorController extends BaseController
         $vendors = User::role('vendor')
             ->where('status', 'active')
             ->whereHas('vendorProfile', function($q) {
-                $q->where('is_verified', true);
+                $q->where('is_verified', true)
+                  ->where('status', 'approved');
             })
-            ->with('vendorProfile')
-            ->limit(10)
-            ->get();
+            ->with(['vendorProfile', 'products' => function($q) {
+                $q->approved()->with('reviews');
+            }])
+            ->get()
+            ->map(function($vendor) {
+                // Calculate average rating from all product reviews
+                $allReviews = $vendor->products->flatMap->reviews;
+                $averageRating = $allReviews->count() > 0 
+                    ? round($allReviews->avg('rating'), 1) 
+                    : 0;
+                $totalReviews = $allReviews->count();
+                
+                $vendor->average_rating = $averageRating;
+                $vendor->total_reviews = $totalReviews;
+                return $vendor;
+            })
+            ->sortByDesc('average_rating')
+            ->take(10)
+            ->values();
 
         return $this->successResponse(
             VendorResource::collection($vendors),
