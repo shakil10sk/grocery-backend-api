@@ -34,6 +34,7 @@ class VendorController extends BaseController
     {
         $query = User::role('vendor')
             ->with('vendorProfile')
+            ->withCount('products')
             ->whereHas('vendorProfile');
 
         // For public access, only show active and verified vendors

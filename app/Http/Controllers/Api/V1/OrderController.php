@@ -166,8 +166,10 @@ class OrderController extends BaseController
 
             DB::commit();
 
+            $orders = Order::with(['customer', 'vendor', 'address', 'items'])->whereIn('id', collect($ordersByVendor)->pluck('id'))->get();
+
             return $this->successResponse(
-                OrderResource::collection(collect($ordersByVendor)->load(['customer', 'vendor', 'address', 'items'])),
+                OrderResource::collection($orders),
                 'Order(s) created successfully',
                 201
             );

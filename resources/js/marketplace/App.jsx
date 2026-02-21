@@ -12,6 +12,8 @@ const CheckoutPage = lazy(() => import('./pages/Checkout'))
 const RegisterPage = lazy(() => import('./pages/Register'))
 const ProfilePage = lazy(() => import('./pages/Profile'))
 const OrdersPage = lazy(() => import('./pages/Orders'))
+const OrderDetailPage = lazy(() => import('./pages/OrderDetail'))
+const TrackOrderPage = lazy(() => import('./pages/TrackOrder'))
 const WishlistPage = lazy(() => import('./pages/Wishlist'))
 
 const VendorsPage = lazy(() => import('./pages/Vendors'))
@@ -51,6 +53,8 @@ function App() {
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/orders" element={<OrdersPage />} />
+                  <Route path="/orders/:id" element={<OrderDetailPage />} />
+                  <Route path="/track-order" element={<TrackOrderPage />} />
                   <Route path="/wishlist" element={<WishlistPage />} />
                   <Route path="/login" element={<RegisterPage />} /> {/* Using Register for now as Login/Signup usually same page or similar */}
                   <Route path="/auth/vendor" element={<VendorAuthPage />} />

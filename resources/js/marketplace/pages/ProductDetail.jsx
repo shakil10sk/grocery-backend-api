@@ -26,7 +26,7 @@ const ProductDetail = () => {
 
         if (productData && typeof productData === 'object' && productData.id) {
           setProduct(productData);
-          setSelectedImage(productData.thumbnail_url || (productData.images && productData.images[0]?.url));
+          setSelectedImage(productData.thumbnail_url || (productData.images && productData.images[0]?.image_path));
         } else {
           throw new Error('Invalid product data');
         }
@@ -101,11 +101,11 @@ const ProductDetail = () => {
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setSelectedImage(img.url)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === img.url ? 'border-green-600 shadow-sm' : 'border-transparent hover:border-gray-200'
+                    onClick={() => setSelectedImage(img.image_path)}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === img.image_path ? 'border-green-600 shadow-sm' : 'border-transparent hover:border-gray-200'
                       }`}
                   >
-                    <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    <img src={img.image_path} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -125,11 +125,17 @@ const ProductDetail = () => {
               </h1>
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center">
-                  <span className="text-yellow-400 text-xl">★★★★☆</span>
-                  <span className="text-sm text-gray-500 ml-2">(4.5 / 5.0)</span>
+                  <div className="flex items-center text-yellow-400">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-xl">
+                        {i < Math.floor(product.average_rating || 0) ? '★' : '☆'}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-500 ml-2">({product.average_rating || '0.0'} / 5.0)</span>
                 </div>
                 <span className="text-gray-300">|</span>
-                <span className="text-sm text-green-600 font-medium">{product.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
+                <span className="text-sm text-green-600 font-medium">{product.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}</span>
               </div>
             </div>
 

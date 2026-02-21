@@ -132,5 +132,9 @@ class DatabaseSeeder extends Seeder
                 'sku' => 'CARROT-001',
             ]
         );
+
+        $this->call([
+            GroceryDummyDataSeeder::class,
+        ]);
     }
 }

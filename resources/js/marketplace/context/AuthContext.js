@@ -47,6 +47,11 @@ export const AuthProvider = ({ children }) => {
         setToken(null);
         setUser(null);
         setError(undefined);
+        // Clear all auth-related keys from localStorage
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
     }, [
         setToken,
         setUser
@@ -148,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     ]);
     return /*#__PURE__*/ _jsx(AuthContext.Provider, {
         value: {
-            isAuthenticated: !!user,
+            isAuthenticated: !!user && !!token,
             user: user || undefined,
             token: token || undefined,
             loading,

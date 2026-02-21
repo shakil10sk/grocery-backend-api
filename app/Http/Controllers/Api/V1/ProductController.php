@@ -134,7 +134,6 @@ class ProductController extends BaseController
     )]
     public function store(StoreProductRequest $request): JsonResponse
     {
-        dd($request->all());
         $product = Product::create([
             'vendor_id' => auth()->id(),
             'category_id' => $request->category_id,
@@ -155,7 +154,7 @@ class ProductController extends BaseController
             'is_active' => false, // Inactive until approved
             'meta' => $request->meta,
         ]);
-dd($product, 32);
+
         $product->load(['category', 'vendor', 'images', 'variations']);
 
         return $this->successResponse(

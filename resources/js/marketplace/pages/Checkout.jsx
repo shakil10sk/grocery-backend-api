@@ -58,6 +58,7 @@ const Checkout = () => {
       }
     } catch (err) {
       console.error('Failed to fetch addresses:', err);
+      setShowAddressForm(true);
     } finally {
       setLoading(false);
     }

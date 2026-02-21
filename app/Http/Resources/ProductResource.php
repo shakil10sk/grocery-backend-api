@@ -32,6 +32,15 @@ class ProductResource extends JsonResource
             'rejection_reason' => $this->when(auth()->user()?->isVendor() && $this->status === 'rejected', $this->rejection_reason),
             'weight' => $this->weight ? (float) $this->weight : null,
             'unit' => $this->unit,
+            'thumbnail_url' => $this->images->where('is_primary', true)->first()?->image_path 
+                ? (str_starts_with($image_path = $this->images->where('is_primary', true)->first()->image_path, 'http') 
+                    ? $image_path 
+                    : asset('storage/' . $image_path))
+                : ($this->images->first()?->image_path 
+                    ? (str_starts_with($image_path = $this->images->first()->image_path, 'http') 
+                        ? $image_path 
+                        : asset('storage/' . $image_path))
+                    : null),
             'category' => $this->whenLoaded('category', function () {
                 return [
                     'id' => $this->category->id,
@@ -43,6 +52,11 @@ class ProductResource extends JsonResource
                 return [
                     'id' => $this->vendor->id,
                     'name' => $this->vendor->name,
+                    'vendor_profile' => $this->vendor->vendorProfile ? [
+                        'store_name' => $this->vendor->vendorProfile->store_name,
+                        'store_slug' => $this->vendor->vendorProfile->store_slug,
+                        'is_verified' => $this->vendor->vendorProfile->is_verified,
+                    ] : null,
                 ];
             }),
             'variations' => $this->whenLoaded('variations', function () {
@@ -58,7 +72,7 @@ class ProductResource extends JsonResource
             'images' => $this->whenLoaded('images', function () {
                 return $this->images->map(fn($image) => [
                     'id' => $image->id,
-                    'image_path' => asset('storage/' . $image->image_path),
+                    'image_path' => str_starts_with($image->image_path, 'http') ? $image->image_path : asset('storage/' . $image->image_path),
                     'is_primary' => $image->is_primary,
                     'sort_order' => $image->sort_order,
                 ])->sortBy('sort_order')->values();

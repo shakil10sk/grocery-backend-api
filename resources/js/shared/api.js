@@ -11,12 +11,26 @@ export const api = axios.create({
   },
 });
 
-// Add CSRF token to requests
+// Add token to requests
 api.interceptors.request.use((config) => {
-  const token = document.querySelector('meta[name="csrf-token"]')?.content;
-  if (token) {
-    config.headers['X-CSRF-TOKEN'] = token;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+  if (csrfToken) {
+    config.headers['X-CSRF-TOKEN'] = csrfToken;
   }
+
+  let token = localStorage.getItem('token');
+  if (token) {
+    // If token is stored as a JSON string (with quotes), parse it
+    if (token.startsWith('"') && token.endsWith('"')) {
+      try {
+        token = JSON.parse(token);
+      } catch (e) {
+        // Fallback to original token if parsing fails
+      }
+    }
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+
   return config;
 });
 
@@ -28,6 +42,7 @@ api.interceptors.response.use(
       // Handle unauthorized - only redirect if not already on login page
       // This allows public pages to load without redirecting
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       const currentPath = window.location.pathname;
       if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
         // Only redirect if accessing protected resources
