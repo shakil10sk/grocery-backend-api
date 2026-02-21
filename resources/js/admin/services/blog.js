@@ -78,14 +78,52 @@ export const blogService = {
    * Create blog category
    */
   createCategory: async (data) => {
-    return apiService.post(`${BLOG_API}/categories`, data);
+    // Check if there's a file upload
+    const hasFile = data instanceof FormData || (data.image && data.image instanceof File);
+
+    if (hasFile) {
+      const formData = data instanceof FormData ? data : new FormData();
+
+      if (!(data instanceof FormData)) {
+        Object.keys(data).forEach(key => {
+          if (key === 'image' && data[key] instanceof File) {
+            formData.append('image', data[key]);
+          } else if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+          }
+        });
+      }
+
+      return apiService.post(`${BLOG_API}/categories`, formData);
+    } else {
+      return apiService.post(`${BLOG_API}/categories`, data);
+    }
   },
 
   /**
    * Update blog category
    */
   updateCategory: async (categoryId, data) => {
-    return apiService.put(`${BLOG_API}/categories/${categoryId}`, data);
+    // Check if there's a file upload
+    const hasFile = data instanceof FormData || (data.image && data.image instanceof File);
+
+    if (hasFile) {
+      const formData = data instanceof FormData ? data : new FormData();
+
+      if (!(data instanceof FormData)) {
+        Object.keys(data).forEach(key => {
+          if (key === 'image' && data[key] instanceof File) {
+            formData.append('image', data[key]);
+          } else if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+          }
+        });
+      }
+
+      return apiService.put(`${BLOG_API}/categories/${categoryId}`, formData);
+    } else {
+      return apiService.put(`${BLOG_API}/categories/${categoryId}`, data);
+    }
   },
 
   /**

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\BaseController;
 use App\Models\Slider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: "Sliders", description: "Slider management for hero sections")]
@@ -91,8 +92,8 @@ class SliderController extends BaseController
             'link_text' => 'nullable|string|max:100',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-            'start_date' => 'nullable|date_format:Y-m-d H:i:s',
-            'end_date' => 'nullable|date_format:Y-m-d H:i:s',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
             'button_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'text_overlay_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'overlay_opacity' => 'nullable|string|regex:/^\d+(\.\d+)?$/',
@@ -149,8 +150,9 @@ class SliderController extends BaseController
             'link_text' => 'nullable|string|max:100',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-            'start_date' => 'nullable|date_format:Y-m-d H:i:s',
-            'end_date' => 'nullable|date_format:Y-m-d H:i:s',
+            // Allow simple dates like "2026-02-21" as well as full datetimes
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
             'button_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'text_overlay_color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
             'overlay_opacity' => 'nullable|string|regex:/^\d+(\.\d+)?$/',
@@ -249,5 +251,62 @@ class SliderController extends BaseController
         }
 
         return $this->successResponse(null, 'Sliders reordered successfully');
+    }
+
+    /**
+     * Upload slider image
+     */
+    #[OA\Post(
+        path: "/api/v1/admin/sliders/upload-image",
+        summary: "Upload slider image (Admin only)",
+        tags: ["Sliders"],
+        security: [["bearerAuth" => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "multipart/form-data",
+                schema: new OA\Schema(
+                    required: ["image"],
+                    properties: [
+                        new OA\Property(property: "image", type: "string", format: "binary"),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "Image uploaded successfully"),
+            new OA\Response(response: 403, description: "Forbidden"),
+            new OA\Response(response: 422, description: "Validation error"),
+        ]
+    )]
+    public function uploadImage(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
+            ]);
+
+            $file = $request->file('image');
+            
+            // Verify file is actually an image
+            if (!getimagesize($file)) {
+                return $this->errorResponse('Uploaded file is not a valid image', 422);
+            }
+
+            $path = $file->store('sliders', 'public');
+
+            if (!$path) {
+                return $this->errorResponse('Failed to store image', 500);
+            }
+
+            $imageUrl = asset('storage/' . $path);
+
+            return $this->successResponse([
+                'image_url' => $imageUrl,
+                'path' => $path,
+            ], 'Image uploaded successfully', 200);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Image upload failed: ' . $e->getMessage(), 500);
+        }
     }
 }

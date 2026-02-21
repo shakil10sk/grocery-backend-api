@@ -22,6 +22,8 @@ export default function SlidersManagement() {
     text_overlay_color: '#ffffff',
     overlay_opacity: '30',
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     fetchSliders();
@@ -49,6 +51,48 @@ export default function SlidersManagement() {
     }));
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload file
+    try {
+      setUploadingImage(true);
+      setError(null);
+      const response = await sliderService.uploadImage(file);
+      setFormData(prev => ({
+        ...prev,
+        image_url: response.data.image_url,
+      }));
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError('Failed to upload image: ' + (err.response?.data?.message || err.message));
+      setImagePreview(null);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -66,6 +110,7 @@ export default function SlidersManagement() {
     });
     setEditingSlider(null);
     setShowForm(false);
+    setImagePreview(null);
   };
 
   const handleSubmit = async (e) => {
@@ -111,6 +156,7 @@ export default function SlidersManagement() {
       text_overlay_color: slider.text_overlay_color || '#ffffff',
       overlay_opacity: slider.overlay_opacity || '30',
     });
+    setImagePreview(slider.image_url);
     setShowForm(true);
   };
 
@@ -192,17 +238,34 @@ export default function SlidersManagement() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Image URL *</label>
-                <input
-                  type="url"
-                  name="image_url"
-                  value={formData.image_url}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded"
-                  placeholder="https://example.com/image.jpg"
-                  required
-                />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">Slider Image *</label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="flex-1 px-4 py-2 border rounded"
+                    />
+                    {uploadingImage && (
+                      <span className="px-4 py-2 text-sm text-gray-600">Uploading...</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Or enter image URL manually:
+                  </div>
+                  <input
+                    type="url"
+                    name="image_url"
+                    value={formData.image_url}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border rounded"
+                    placeholder="https://example.com/image.jpg"
+                    required
+                  />
+                </div>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Description</label>
@@ -314,13 +377,16 @@ export default function SlidersManagement() {
               </div>
             </div>
 
-            {formData.image_url && (
+            {(imagePreview || formData.image_url) && (
               <div className="mt-4">
                 <p className="text-sm font-medium mb-2">Preview:</p>
                 <img
-                  src={formData.image_url}
+                  src={imagePreview || formData.image_url}
                   alt="Preview"
                   className="max-w-md h-48 object-cover rounded border"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
                 />
               </div>
             )}

@@ -14,7 +14,7 @@ export default function BlogPage() {
         try {
             setLoading(true);
             setError(null);
-            const response = await api.get('/blog/posts');
+            const response = await api.get('/blog/published/posts');
             const data = response.data.data || response.data || [];
             setPosts(data);
         } catch (err) {

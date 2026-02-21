@@ -36,4 +36,30 @@ class BlogCategory extends Model
     {
         return $query->where('is_active', true);
     }
+
+    /**
+     * Generate unique slug from name
+     */
+    public static function generateSlug(string $name, ?int $excludeId = null): string
+    {
+        $slug = \Str::slug($name);
+        $originalSlug = $slug;
+        $counter = 1;
+
+        $query = static::where('slug', $slug);
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        while ($query->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $query = static::where('slug', $slug);
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+            $counter++;
+        }
+
+        return $slug;
+    }
 }

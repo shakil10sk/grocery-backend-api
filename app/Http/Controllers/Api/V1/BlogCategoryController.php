@@ -6,6 +6,7 @@ use App\Http\Resources\BlogCategoryResource;
 use App\Models\BlogCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use OpenApi\Attributes as OA;
 
@@ -66,17 +67,33 @@ class BlogCategoryController extends BaseController
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|url',
+            'image' => 'nullable|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'sort_order' => 'nullable|integer',
+            'is_active' => 'nullable',
         ]);
 
-        $category = BlogCategory::create([
+        // Normalize boolean values from FormData (they come as strings "true"/"false")
+        $isActive = $request->input('is_active');
+        if ($isActive !== null) {
+            $isActive = filter_var($isActive, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $data = [
             'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'slug' => BlogCategory::generateSlug($request->name),
             'description' => $request->description,
-            'image' => $request->image,
-            'sort_order' => 0,
-            'is_active' => true,
-        ]);
+            'sort_order' => $request->input('sort_order', 0),
+            'is_active' => $isActive ?? true,
+        ];
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('blog-categories', 'public');
+            $data['image'] = $path;
+        }
+        
+
+        $category = BlogCategory::create($data);
 
         return $this->successResponse(
             new BlogCategoryResource($category),
@@ -102,8 +119,10 @@ class BlogCategoryController extends BaseController
             new OA\Response(response: 404, description: "Category not found"),
         ]
     )]
-    public function update(Request $request, BlogCategory $category): JsonResponse
+    public function update(Request $request, $categoryId): JsonResponse
     {
+        $category = BlogCategory::find($categoryId);
+        // dd($category->all(), $category);
         if (!auth()->user()->isAdmin()) {
             return $this->errorResponse('Unauthorized. Admin access required.', 403);
         }
@@ -111,12 +130,43 @@ class BlogCategoryController extends BaseController
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|url',
-            'is_active' => 'boolean',
+            'image' => 'nullable|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'is_active' => 'nullable',
             'sort_order' => 'nullable|integer',
         ]);
 
-        $category->update($request->only(['name', 'description', 'image', 'is_active', 'sort_order']));
+        $data = $request->only(['name', 'description', 'sort_order']);
+        
+        // Normalize boolean values from FormData (they come as strings "true"/"false")
+        if ($request->has('is_active')) {
+            $isActive = $request->input('is_active');
+            $data['is_active'] = $isActive !== null ? filter_var($isActive, FILTER_VALIDATE_BOOLEAN) : false;
+        }
+// dd($request->hasFile('image'), 32);
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // dd($request->image);
+            // Delete old image
+            if ($category->image && Storage::disk('public')->exists($category->image)) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $path = $request->file('image')->store('blog-categories', 'public');
+            $data['image'] = $path;
+        } elseif ($request->has('image') && $request->image === null) {
+            // Allow removing image by sending null
+            if ($category->image && Storage::disk('public')->exists($category->image)) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $data['image'] = null;
+        }
+        // Update slug if name changed
+        if (isset($data['name']) && $data['name'] !== $category->name) {
+            $data['slug'] = BlogCategory::generateSlug($data['name'], $category->id);
+        }
+
+        $category->update($data);
+        // Reload the model from database to ensure all attributes are fresh
+        $category->refresh();
 
         return $this->successResponse(
             new BlogCategoryResource($category),

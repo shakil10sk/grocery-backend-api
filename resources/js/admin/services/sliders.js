@@ -51,4 +51,13 @@ export const sliderService = {
   reorderSliders: async (sliders) => {
     return apiService.post(`${SLIDERS_API}/reorder`, { sliders });
   },
+
+  /**
+   * Upload slider image
+   */
+  uploadImage: async (imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    return apiService.postFormData(`${SLIDERS_API}/upload-image`, formData);
+  },
 };

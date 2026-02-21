@@ -18,12 +18,12 @@ export default function BlogPostForm({ post, categories, onSaved }) {
   useEffect(() => {
     if (post) {
       setFormData({
-        blog_category_id: post.blog_category_id,
+        blog_category_id: post.category.id,
         title: post.title,
         content: post.content,
         excerpt: post.excerpt,
         status: post.status,
-        featured_image: null,
+        featured_image: post.featured_image,
         meta: post.meta || {},
       });
       if (post.featured_image) {

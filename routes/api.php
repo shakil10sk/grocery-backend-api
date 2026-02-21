@@ -133,5 +133,17 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
     Route::prefix('reports')->middleware('role:vendor,admin')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\V1\VendorReportController::class, 'index']);
     });
+    
+    // Slider routes (admin only)
+    Route::prefix('admin')->middleware('role:admin')->group(function () {
+        Route::get('/sliders', [App\Http\Controllers\Api\V1\SliderController::class, 'indexAll']);
+        Route::get('/sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'show']);
+        Route::post('/sliders', [App\Http\Controllers\Api\V1\SliderController::class, 'store']);
+        Route::put('/sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'update']);
+        Route::delete('/sliders/{slider}', [App\Http\Controllers\Api\V1\SliderController::class, 'destroy']);
+        Route::post('/sliders/{slider}/toggle', [App\Http\Controllers\Api\V1\SliderController::class, 'toggle']);
+        Route::post('/sliders/reorder', [App\Http\Controllers\Api\V1\SliderController::class, 'reorder']);
+        Route::post('/sliders/upload-image', [App\Http\Controllers\Api\V1\SliderController::class, 'uploadImage']);
+    });
 });
 

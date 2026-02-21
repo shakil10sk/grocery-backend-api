@@ -28,6 +28,8 @@ class BlogController extends BaseController
         parameters: [
             new OA\Parameter(name: "category_id", in: "query", description: "Filter by category", required: false, schema: new OA\Schema(type: "integer")),
             new OA\Parameter(name: "search", in: "query", description: "Search posts", required: false, schema: new OA\Schema(type: "string")),
+            new OA\Parameter(name: "admin_view", in: "query", description: "Show all posts (Admin only)", required: false, schema: new OA\Schema(type: "boolean")),
+            new OA\Parameter(name: "status", in: "query", description: "Filter by status (Admin only)", required: false, schema: new OA\Schema(type: "string", enum: ["draft", "published", "archived"])),
             new OA\Parameter(name: "page", in: "query", description: "Page number", required: false, schema: new OA\Schema(type: "integer")),
         ],
         responses: [
@@ -36,7 +38,21 @@ class BlogController extends BaseController
     )]
     public function indexPosts(Request $request): JsonResponse
     {
-        $query = BlogPost::with(['category', 'author'])->published();
+        $query = BlogPost::with(['category', 'author']);
+
+        // Check if admin wants all posts (including unpublished/archived)
+        // Only allow this if the user is authenticated as an admin
+        $isAdminView = $request->boolean('admin_view') && auth('api')->check() && auth('api')->user()->isAdmin();
+
+        if (!$isAdminView) {
+            // Public view: only show published and active blogs
+            $query->published();
+        } else {
+            // Admin view: can filter by status if provided
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+        }
 
         if ($request->has('category_id')) {
             $query->where('blog_category_id', $request->category_id);
@@ -44,19 +60,22 @@ class BlogController extends BaseController
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%");
             });
         }
 
-        $posts = $query->latest('published_at')->paginate(10);
+        // Ordering: published date for public, created date for admin
+        $posts = $query->latest($isAdminView ? 'created_at' : 'published_at')->paginate(10);
 
         return $this->paginatedResponse(
             $posts->through(fn($post) => new BlogPostResource($post)),
             'Blog posts retrieved successfully'
         );
     }
+
+
 
     /**
      * Store a new blog post (Admin only)
@@ -94,12 +113,16 @@ class BlogController extends BaseController
         $data['user_id'] = auth()->id();
         $data['slug'] = BlogPost::generateSlug($request->title);
 
+        // dd($request->hasFile('featured_image'));
         // Handle featured image
         if ($request->hasFile('featured_image')) {
             $path = $request->file('featured_image')->store('blog', 'public');
             $data['featured_image'] = $path;
         }
 
+        if($request->get('status') == 'published'){
+            $data['published_at'] = now();
+        }
         $post = BlogPost::create($data);
         $post->load(['category', 'author']);
 
@@ -159,15 +182,21 @@ class BlogController extends BaseController
         $data = $request->only(['blog_category_id', 'title', 'content', 'excerpt', 'status', 'published_at', 'meta']);
 
         // Handle featured image
+        // dd($request->hasFile('featured_image'));
         if ($request->hasFile('featured_image')) {
             // Delete old image
             if ($post->featured_image && Storage::disk('public')->exists($post->featured_image)) {
                 Storage::disk('public')->delete($post->featured_image);
             }
             $path = $request->file('featured_image')->store('blog', 'public');
+            dd($path, 33);
             $data['featured_image'] = $path;
         }
 
+        if($request->get('status') == 'published' && $post->published_at == null){
+            $data['published_at'] = now();
+        }
+        
         $post->update($data);
         $post->load(['category', 'author']);
 
