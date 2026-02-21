@@ -151,4 +151,86 @@ class VendorController extends BaseController
             'Top vendors retrieved successfully'
         );
     }
+    /**
+     * Approve vendor (Admin only)
+     */
+    #[OA\Post(
+        path: "/api/v1/vendors/{id}/approve",
+        summary: "Approve vendor (Admin only)",
+        tags: ["Vendors"],
+        security: [["bearerAuth" => []]],
+        responses: [
+            new OA\Response(response: 200, description: "Vendor approved successfully"),
+            new OA\Response(response: 403, description: "Forbidden"),
+        ]
+    )]
+    public function approve(int $id): JsonResponse
+    {
+        $vendor = User::role('vendor')->findOrFail($id);
+        $profile = $vendor->vendorProfile;
+
+        if (!$profile) {
+            return $this->errorResponse('Vendor profile not found', 404);
+        }
+
+        $profile->update([
+            'status' => 'approved',
+            'is_verified' => true
+        ]);
+
+        $vendor->update(['status' => 'active']);
+
+        return $this->successResponse(
+            new VendorResource($vendor),
+            'Vendor approved successfully'
+        );
+    }
+
+    /**
+     * Reject vendor (Admin only)
+     */
+    #[OA\Post(
+        path: "/api/v1/vendors/{id}/reject",
+        summary: "Reject vendor (Admin only)",
+        tags: ["Vendors"],
+        security: [["bearerAuth" => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["rejection_reason"],
+                properties: [
+                    new OA\Property(property: "rejection_reason", type: "string", example: "Incomplete documentation"),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "Vendor rejected successfully"),
+        ]
+    )]
+    public function reject(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        $vendor = User::role('vendor')->findOrFail($id);
+        $profile = $vendor->vendorProfile;
+
+        if (!$profile) {
+            return $this->errorResponse('Vendor profile not found', 404);
+        }
+
+        $profile->update([
+            'status' => 'rejected',
+            'is_verified' => false,
+            'rejection_reason' => $request->rejection_reason
+        ]);
+
+        $vendor->update(['status' => 'inactive']);
+
+        return $this->successResponse(
+            new VendorResource($vendor),
+            'Vendor rejected successfully'
+        );
+    }
 }

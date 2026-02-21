@@ -32,7 +32,7 @@ class CategoryController extends BaseController
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = Category::with(['parent', 'children']);
+        $query = Category::with(['parent', 'children'])->withCount('products');
 
         if ($request->has('parent_id')) {
             $query->where('parent_id', $request->parent_id);

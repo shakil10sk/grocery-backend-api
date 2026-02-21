@@ -42,6 +42,19 @@ class ReviewController extends BaseController
     /**
      * List all reviews (admin/vendor view)
      */
+    #[OA\Get(
+        path: "/api/v1/reviews",
+        summary: "List all reviews (Admin/Vendor only)",
+        tags: ["Reviews"],
+        security: [["bearerAuth" => []]],
+        parameters: [
+            new OA\Parameter(name: "filter", in: "query", description: "Filter by status (all, pending, approved)", required: false, schema: new OA\Schema(type: "string", enum: ["all", "pending", "approved"])),
+            new OA\Parameter(name: "per_page", in: "query", description: "Items per page", required: false, schema: new OA\Schema(type: "integer")),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Reviews retrieved successfully"),
+        ]
+    )]
     public function indexAll(Request $request): JsonResponse
     {
         $user = auth()->user();

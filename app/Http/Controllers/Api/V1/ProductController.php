@@ -69,6 +69,12 @@ class ProductController extends BaseController
             $query->where('category_id', $request->category_id);
         }
 
+        if ($request->has('category')) {
+            $query->whereHas('category', function($q) use ($request) {
+                $q->where('slug', $request->category);
+            });
+        }
+
         if ($request->has('status') && ($user && ($user->isAdmin() || $user->isVendor()))) {
             $query->where('status', $request->status);
         }

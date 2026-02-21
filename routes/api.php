@@ -42,6 +42,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/vendors', [App\Http\Controllers\Api\V1\VendorController::class, 'index']);
     Route::get('/vendors/top', [App\Http\Controllers\Api\V1\VendorController::class, 'top']);
     Route::get('/vendors/{id}', [App\Http\Controllers\Api\V1\VendorController::class, 'show']);
+    Route::post('/vendors/{id}/approve', [App\Http\Controllers\Api\V1\VendorController::class, 'approve'])->middleware(['auth:api', 'role:admin']);
+    Route::post('/vendors/{id}/reject', [App\Http\Controllers\Api\V1\VendorController::class, 'reject'])->middleware(['auth:api', 'role:admin']);
     Route::get('/categories', [App\Http\Controllers\Api\V1\CategoryController::class, 'index']);
     Route::get('/categories/{category}', [App\Http\Controllers\Api\V1\CategoryController::class, 'show']);
     Route::get('/amounts', [App\Http\Controllers\Api\V1\AmountController::class, 'index']);
@@ -134,6 +136,9 @@ Route::prefix('v1')->middleware('auth:api')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\V1\VendorReportController::class, 'index']);
     });
     
+    // User Management (Admin only)
+    Route::apiResource('users', App\Http\Controllers\Api\V1\UserController::class)->middleware('role:admin');
+
     // Slider routes (admin only)
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/sliders', [App\Http\Controllers\Api\V1\SliderController::class, 'indexAll']);
